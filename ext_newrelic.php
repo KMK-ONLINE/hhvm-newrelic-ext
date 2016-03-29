@@ -379,22 +379,30 @@ function newrelic_file_get_contents_intercept() {
 
 // fread and fwrite (e.g. Redis)
 function newrelic_fread(resource $handle, int $length) {
-    if (stream_get_meta_data($handle)['wrapper_type'] != 'plainfile') {
-        $seg = newrelic_segment_external_begin('sock_read[' . stream_socket_get_name($handle,true) . ']', 'fread');
+    $meta = stream_get_meta_data($handle);
+    $type = $meta['wrapper_type'];
+    if ($type != 'plainfile') {
+        // FAILED: stream_socket_get_name($handle,true)
+        $name = 'sock_read[' . $type . ']';
     } else {
-        $seg = newrelic_segment_external_begin('file', 'fread');
+        $name = 'file';
     }
+    $seg = newrelic_segment_external_begin($name, 'fread');
     $resp = @obs_fread($handle, $length);
     newrelic_segment_end($seg);
     return $resp;
 }
 
 function newrelic_fwrite( resource $handle, string $string, int $length = -1 ) {
-    if (stream_get_meta_data($handle)['wrapper_type'] != 'plainfile') {
-        $seg = newrelic_segment_external_begin('sock_write[' . stream_socket_get_name($handle,true) . ']', 'fwrite');
+    $meta = stream_get_meta_data($handle);
+    $type = $meta['wrapper_type'];
+    if ($type != 'plainfile') {
+        // FAILED: stream_socket_get_name($handle,true)
+        $name = 'sock_write[' . $type ']';
     } else {
-        $seg = newrelic_segment_external_begin('file', 'fwrite');
+        $name = 'file';
     }
+    $seg = newrelic_segment_external_begin($name, 'fwrite');
     $resp = @obs_fwrite($handle, $string, $length);
     newrelic_segment_end($seg);
     return $resp;
